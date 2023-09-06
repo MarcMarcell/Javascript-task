@@ -15,7 +15,7 @@ body {
 }
 
 .body--dark {
-  background-color: #333;
+  background-color: rgb(53, 52, 52);
 }
 
 .button {
@@ -32,5 +32,5 @@ body {
   border: 5px solid snow;
   background-color: #333;
   color: snow;
-  box-shadow: 0 0 5px yellow, 0 0 10px yellow, 0 0 20px yellow;
+  box-shadow: 0 0 5px, 0 0 10px, 0 0 20px yellow
 }

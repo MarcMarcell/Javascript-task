@@ -1,99 +1,143 @@
-const description = document.querySelector("#description");
-const btnAdd = document.querySelector("#btn-add");
-const btnDelete = document.querySelector("#btn-delete");
-const todosList = document.querySelector("#todos-list");
+const todoForm = document.getElementById("todo-form");
+const todoInput = document.getElementById("todo-input");
+const todoList = document.getElementById("todo-list");
+const filterAll = document.getElementById("filter-all");
+const filterOpen = document.getElementById("filter-open");
+const filterDone = document.getElementById("filter-done");
+const removeDoneButton = document.getElementById("remove-done-button");
 
-const url = "http://localhost:5500/todos";
+let todos = [];
 
-const todos = await getTodosData();
-
-renderTodos();
-
-btnAdd.addEventListener("click", addTodo);
-btnDelete.addEventListener("click", deleteDoneTodos);
-todosList.addEventListener("change", updateTodo);
-
-async function getTodosData() {
-  const response = await fetch(url);
-  const todosData = await response.json();
-
-  return todosData;
+if (localStorage.getItem("todos")) {
+  todos = JSON.parse(localStorage.getItem("todos"));
+  displayTodos();
 }
 
-todos = todosData;
-
-async function addTodo(e) {
+todoForm.addEventListener("submit", function (e) {
   e.preventDefault();
-
-  if (description.value.length === 0) {
-    return;
-  }
-
-  const request = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      description: description.value,
-      done: false,
-    }),
-  });
-
-  const newTodo = await request.json();
-
-  todos.push(newTodo);
-
-  description.value = "";
-
-  renderTodos();
-}
-
-function renderTodos() {
-  todosList.innerText = "";
-
-  todos.forEach(function (todo) {
-    const todoWrapper = document.createElement("li");
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.todoId = todo.id;
-    checkbox.id = "todo-" + todo.id;
-    checkbox.checked = todo.done;
-
-    const todoDescription = document.createElement("label");
-    todoDescription.htmlFor = checkbox.id;
-    todoDescription.innerText = todo.description;
-
-    todoWrapper.append(checkbox, todoDescription);
-    todosList.append(todoWrapper);
-  });
-}
-
-function updateTodo(e) {
-  const id = e.target.todoId;
-  const updatedTodo = todos.find(function (todo) {
-    return todo.id === id;
-  });
-
-  updatedTodo.done = !updatedTodo.done;
-  console.log(updatedTodo.done);
-
-  fetch(url + "/" + id, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ done: updatedTodo.done }),
-  })
-    .then((res) => res.json())
-    .then((data) => console.log(data));
-}
-
-function deleteDoneTodos() {
-  for (let i = todos.length - 1; i >= 0; i--) {
-    if (todos[i].done) {
-      todos.splice(i, 1);
+  const todoText = todoInput.value.trim();
+  if (todoText !== "") {
+    if (!isDuplicate(todoText)) {
+      const newTodo = {
+        id: Date.now(),
+        description: todoText,
+        done: false,
+      };
+      todos.push(newTodo);
+      saveTodos();
+      displayTodos();
+      todoInput.value = "";
+    } else {
+      alert("Todo already exists!");
     }
   }
+});
 
-  renderTodos();
+todoList.addEventListener("change", function (e) {
+  const todoId = parseInt(e.target.parentElement.getAttribute("data-id"));
+  const todo = todos.find((todo) => todo.id === todoId);
+  todo.done = e.target.checked;
+  saveTodos();
+});
+
+removeDoneButton.addEventListener("click", function () {
+  todos = todos.filter((todo) => !todo.done);
+  saveTodos();
+  displayTodos();
+});
+
+filterAll.addEventListener("change", displayTodos);
+filterOpen.addEventListener("change", displayTodos);
+filterDone.addEventListener("change", displayTodos);
+
+function displayTodos() {
+  const filter = document.querySelector('input[name="filter"]:checked').id;
+  const filteredTodos =
+    filter === "filter-all"
+      ? todos
+      : filter === "filter-open"
+      ? todos.filter((todo) => !todo.done)
+      : todos.filter((todo) => todo.done);
+
+  todoList.innerHTML = "";
+  filteredTodos.forEach(function (todo) {
+    const todoItem = document.createElement("div");
+    todoItem.setAttribute("data-id", todo.id);
+    todoItem.innerHTML = `
+      <input type="checkbox" ${todo.done ? "checked" : ""} />
+      <span>${todo.description}</span>
+    `;
+    todoList.appendChild(todoItem);
+  });
 }
+
+function saveTodos() {
+  localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+function isDuplicate(todoText) {
+  return todos.some(
+    (todo) => todo.description.toLowerCase() === todoText.toLowerCase()
+  );
+}
+
+fetch("https://api.example.com/todos")
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+
+fetch("https://api.example.com/todos", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    description: "Neuer Todo-Eintrag",
+    done: false,
+  }),
+})
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+
+const todoId = 123;
+fetch(`https://api.example.com/todos/${todoId}`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    description: "Aktualisierter Todo-Eintrag",
+    done: true,
+  }),
+})
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+
+const newtodoId = 123;
+fetch(`https://api.example.com/todos/${todoId}`, {
+  method: "DELETE",
+})
+  .then((response) => {
+    if (response.ok) {
+      console.log("Todo gelöscht");
+    } else {
+      console.error("Fehler beim Löschen des Todos");
+    }
+  })
+  .catch((error) => {
+    console.error(error);
+  });

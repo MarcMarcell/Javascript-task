@@ -7,20 +7,48 @@ const filterDone = document.getElementById("filter-done");
 const removeDoneButton = document.getElementById("remove-done-button");
 let todos = [];
 
+function getTodos() {
+  fetch("http://localhost:4730/todos")
+    .then((response) => response.json())
+    .then((data) => {
+      todos = data;
+      displayTodos();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
+function saveTodos(newTodo) {
+  fetch("http://localhost:4730/todos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newTodo),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      todos.push(data);
+      displayTodos();
+      todoInput.value = "";
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
 todoForm.addEventListener("submit", function (e) {
   e.preventDefault();
   const todoText = todoInput.value.trim();
   if (todoText !== "") {
     if (!isDuplicate(todoText)) {
       const newTodo = {
-        id: Date.now(),
         description: todoText,
         done: false,
       };
-      todos.push(newTodo);
-      saveTodos();
-      displayTodos();
-      todoInput.value = "";
+      saveTodos(newTodo);
     } else {
       alert("Todo already exists!");
     }
@@ -30,8 +58,25 @@ todoForm.addEventListener("submit", function (e) {
 todoList.addEventListener("change", function (e) {
   const todoId = parseInt(e.target.parentElement.getAttribute("data-id"));
   const todo = todos.find((todo) => todo.id === todoId);
-  todo.done = e.target.checked;
-  saveTodos();
+
+  fetch("http://localhost:4730/todos/" + todoId, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      description: todo.description,
+      done: !todo.done,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      todo.done = !todo.done;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 });
 
 removeDoneButton.addEventListener("click", function () {
@@ -69,52 +114,13 @@ function isDuplicate(todoText) {
   );
 }
 
-fetch("http://localhost:4730/todos")
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+getTodos();
 
-fetch("http://localhost:4730/todos", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    description: "Neuer Todo-Eintrag",
-    done: false,
-  }),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+/*
 
-fetch("http://localhost:4730/todos/1", {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    description: "Updated Todo",
-    done: true,
-  }),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
 
-fetch("http://localhost:4730/todos/1", {
+
+fetch("http://localhost:4730/todos/" + todoId, {
   method: "DELETE",
 })
   .then((response) => response.json())
@@ -124,3 +130,4 @@ fetch("http://localhost:4730/todos/1", {
   .catch((error) => {
     console.error(error);
   });
+*/

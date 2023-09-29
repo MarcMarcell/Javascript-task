@@ -5,13 +5,7 @@ const filterAll = document.getElementById("filter-all");
 const filterOpen = document.getElementById("filter-open");
 const filterDone = document.getElementById("filter-done");
 const removeDoneButton = document.getElementById("remove-done-button");
-
 let todos = [];
-
-if (localStorage.getItem("todos")) {
-  todos = JSON.parse(localStorage.getItem("todos"));
-  displayTodos();
-}
 
 todoForm.addEventListener("submit", function (e) {
   e.preventDefault();
@@ -58,7 +52,6 @@ function displayTodos() {
       : filter === "filter-open"
       ? todos.filter((todo) => !todo.done)
       : todos.filter((todo) => todo.done);
-
   todoList.innerHTML = "";
   filteredTodos.forEach(function (todo) {
     const todoItem = document.createElement("div");
@@ -70,18 +63,13 @@ function displayTodos() {
     todoList.appendChild(todoItem);
   });
 }
-
-function saveTodos() {
-  localStorage.setItem("todos", JSON.stringify(todos));
-}
-
 function isDuplicate(todoText) {
   return todos.some(
     (todo) => todo.description.toLowerCase() === todoText.toLowerCase()
   );
 }
 
-fetch("https://api.example.com/todos")
+fetch("http://localhost:4730/todos")
   .then((response) => response.json())
   .then((data) => {
     console.log(data);
@@ -90,7 +78,7 @@ fetch("https://api.example.com/todos")
     console.error(error);
   });
 
-fetch("https://api.example.com/todos", {
+fetch("http://localhost:4730/todos", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -108,14 +96,13 @@ fetch("https://api.example.com/todos", {
     console.error(error);
   });
 
-const todoId = 123;
-fetch(`https://api.example.com/todos/${todoId}`, {
+fetch("http://localhost:4730/todos/1", {
   method: "PUT",
   headers: {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    description: "Aktualisierter Todo-Eintrag",
+    description: "Updated Todo",
     done: true,
   }),
 })
@@ -127,16 +114,12 @@ fetch(`https://api.example.com/todos/${todoId}`, {
     console.error(error);
   });
 
-const newtodoId = 123;
-fetch(`https://api.example.com/todos/${todoId}`, {
+fetch("http://localhost:4730/todos/1", {
   method: "DELETE",
 })
-  .then((response) => {
-    if (response.ok) {
-      console.log("Todo gelöscht");
-    } else {
-      console.error("Fehler beim Löschen des Todos");
-    }
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
   })
   .catch((error) => {
     console.error(error);
